@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js'); const { token } = require('./config.json');
+const { Client, Collection, Events, GatewayIntentBits } = require('discord.js'); const { token, PATH } = require('./config.json');
 const { codeBlock } = require("@discordjs/builders")
 const { exec } = require("child_process");
 const readFile = require('fs/promises')
@@ -56,21 +56,18 @@ client.on(Events.InteractionCreate, async interaction => {
         await interaction.reply(`your code: ${ msg }`)
         const msg1 = codeBlock("cpp", inputStr)
         await interaction.followUp(`your input: ${ msg1 }`)
-     
-        fs.writeFile('/home/vboxuser/Desktop/bot/commands/code/code.cpp', codeStr, (err) => {
+        
+        fs.writeFile('./commands/code/code.cpp', codeStr, (err) => {
             if (err) throw err;
-        }
-        )
-        fs.writeFile('/home/vboxuser/Desktop/bot/commands/code/input.txt', inputStr, (err) => {
+        })
+        fs.writeFile('./commands/code/in.txt', inputStr, (err) => {
             if (err) throw err;
-        }
-        )        
-        exec('bash /home/vboxuser/Desktop/bot/commands/code/run.sh')
+        })
+        exec('bash ./commands/code/run.sh')
         
         await new Promise(r => setTimeout(r, 4000));
-        fs.readFile('/home/vboxuser/Desktop/bot/commands/code/out.txt', (err, out) => {
+        fs.readFile('./commands/code/out.txt', (err, out) => {
             if (err) throw err;
             interaction.followUp(codeBlock(out.toString()));
-            
         })
 }})
