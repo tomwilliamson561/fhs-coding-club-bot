@@ -1,10 +1,18 @@
-const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder } = require('discord.js');
+const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('compile')
-        .setDescription('compiles your code'),
+        .setDescription('compiles your code')
+        .addStringOption(option =>
+            option.setName('language')
+                .setDescription('Select a language')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'c++', value: 'cpp' },
+                    { name: 'Python', value: 'python' },
+                )),
     async execute(interaction) {
 
         const modal = new ModalBuilder()
@@ -23,19 +31,11 @@ module.exports = {
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(false);
 
+
         const actionRow = new ActionRowBuilder().addComponents(code);
-        modal.addComponents(actionRow)
         const actionRow1 = new ActionRowBuilder().addComponents(input);
-        modal.addComponents(actionRow1)
+
+        modal.addComponents(actionRow, actionRow1)
         interaction.showModal(modal)
-
     },
-
 };
-
-
-
-
-
-
-
