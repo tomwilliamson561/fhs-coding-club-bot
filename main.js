@@ -51,13 +51,13 @@ client.on(Events.InteractionCreate, async interaction => {
     const codeStr = interaction.fields.getTextInputValue('codeInput');
     const inputStr = interaction.fields.getTextInputValue('Input');
 
-    if (interaction.customId === 'inputCode') {
+    if (interaction.customId.slice(0, 9) === 'inputCode') {
         const msg = codeBlock(codeStr)
         await interaction.reply(`your code: ${ msg }`)
         const msg1 = codeBlock(inputStr)
         await interaction.followUp(`your input: ${ msg1 }`)
 
-        if (interaction.options.getString('language') === 'python') {
+        if (interaction.customId === 'inputCode_py') {
             fs.writeFile('./commands/code/py_code.py', codeStr, (err) => {
                 if (err) throw err;
             })
@@ -69,7 +69,7 @@ client.on(Events.InteractionCreate, async interaction => {
                 interaction.followUp(codeBlock(out.toString()));
             })
         }
-        if (interaction.options.getString('language') === 'cpp') {
+        if (interaction.customId === 'inputCode_cpp') {
             fs.writeFile('./commands/code/cpp_code.cpp', codeStr, (err) => {
                 if (err) throw err;
             })

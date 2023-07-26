@@ -14,10 +14,13 @@ module.exports = {
                     { name: 'Python', value: 'python' },
                 )),
     async execute(interaction) {
-
-        const modal = new ModalBuilder()
-            .setCustomId('inputCode')
-            .setTitle('Input Code')
+        const modal = new ModalBuilder();
+        if (interaction.options.getString('language') === 'python') {
+            modal.setCustomId('inputCode_py').setTitle('Input Code')
+        }
+        if (interaction.options.getString('language') === 'cpp') {
+            modal.setCustomId('inputCode_cpp').setTitle('Input Code')
+        }
 
         const code = new TextInputBuilder()
             .setLabel('Paste code here')

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python commands/code/py_code.py
+python3 ./commands/code/py_code.py > ./commands/code/py_out.txt
