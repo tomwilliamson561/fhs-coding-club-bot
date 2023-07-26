@@ -58,28 +58,28 @@ client.on(Events.InteractionCreate, async interaction => {
         await interaction.followUp(`your input: ${ msg1 }`)
 
         if (interaction.customId === 'inputCode_py') {
-            fs.writeFile('./commands/code/py_code.py', codeStr, (err) => {
+            fs.writeFile('./commands/code/compile/py_code.py', codeStr, (err) => {
                 if (err) throw err;
             })
-            exec('bash ./commands/code/py_run.sh')
+            exec('bash ./commands/code/compile/py_run.sh')
             
             await new Promise(r => setTimeout(r, 4000));
-            fs.readFile('./commands/code/py_out.txt', (err, out) => {
+            fs.readFile('./commands/code/compile/py_out.txt', (err, out) => {
                 if (err) throw err;
                 interaction.followUp(codeBlock(out.toString()));
             })
         }
         if (interaction.customId === 'inputCode_cpp') {
-            fs.writeFile('./commands/code/cpp_code.cpp', codeStr, (err) => {
+            fs.writeFile('./commands/code/compile/cpp_code.cpp', codeStr, (err) => {
                 if (err) throw err;
             })
-            fs.writeFile('./commands/code/cpp_in.txt', inputStr, (err) => {
+            fs.writeFile('./commands/code/compile/cpp_in.txt', inputStr, (err) => {
                 if (err) throw err;
             })
-            exec('bash ./commands/code/cpp_run.sh')
+            exec('bash ./commands/code/compile/cpp_run.sh')
             
             await new Promise(r => setTimeout(r, 4000));
-            fs.readFile('./commands/code/cpp_out.txt', (err, out) => {
+            fs.readFile('./commands/code/compile/cpp_out.txt', (err, out) => {
                 if (err) throw err;
                 interaction.followUp(codeBlock(out.toString()));
             })
