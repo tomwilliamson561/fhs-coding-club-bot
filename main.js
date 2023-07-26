@@ -57,20 +57,17 @@ client.on(Events.InteractionCreate, async interaction => {
         const msg1 = codeBlock("cpp", inputStr)
         await interaction.followUp(`your input: ${ msg1 }`)
         
-        fs.writeFile(PATH + '/commands/code/code.cpp', codeStr, (err) => {
+        fs.writeFile('./commands/code/code.cpp', codeStr, (err) => {
             if (err) throw err;
-        }
-        )
-        fs.writeFile(PATH + '/code/input.txt', inputStr, (err) => {
+        })
+        fs.writeFile('./commands/code/in.txt', inputStr, (err) => {
             if (err) throw err;
-        }
-        )        
-        exec('bash' + PATH + '/commands/code/run.sh')
+        })
+        exec('bash ./commands/code/run.sh')
         
         await new Promise(r => setTimeout(r, 4000));
-        fs.readFile(PATH + '/commands/code/out.txt', (err, out) => {
+        fs.readFile('./commands/code/out.txt', (err, out) => {
             if (err) throw err;
             interaction.followUp(codeBlock(out.toString()));
-            
         })
 }})
