@@ -1,2 +1,6 @@
 config.json
 .vscode
+
+*.txt
+*.cpp
+*.py
