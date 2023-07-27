@@ -1,15 +1,26 @@
-const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder } = require('discord.js');
+const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('compile')
-        .setDescription('compiles your code'),
+        .setDescription('compiles your code')
+        .addStringOption(option =>
+            option.setName('language')
+                .setDescription('Select a language')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'c++', value: 'cpp' },
+                    { name: 'Python', value: 'python' },
+                )),
     async execute(interaction) {
-
-        const modal = new ModalBuilder()
-            .setCustomId('inputCode')
-            .setTitle('Input Code')
+        const modal = new ModalBuilder();
+        if (interaction.options.getString('language') === 'python') {
+            modal.setCustomId('inputCode_py').setTitle('Input Code')
+        }
+        if (interaction.options.getString('language') === 'cpp') {
+            modal.setCustomId('inputCode_cpp').setTitle('Input Code')
+        }
 
         const code = new TextInputBuilder()
             .setLabel('Paste code here')
@@ -23,19 +34,11 @@ module.exports = {
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(false);
 
+
         const actionRow = new ActionRowBuilder().addComponents(code);
-        modal.addComponents(actionRow)
         const actionRow1 = new ActionRowBuilder().addComponents(input);
-        modal.addComponents(actionRow1)
+
+        modal.addComponents(actionRow, actionRow1)
         interaction.showModal(modal)
-
     },
-
 };
-
-
-
-
-
-
-

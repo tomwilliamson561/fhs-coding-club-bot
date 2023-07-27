@@ -51,23 +51,37 @@ client.on(Events.InteractionCreate, async interaction => {
     const codeStr = interaction.fields.getTextInputValue('codeInput');
     const inputStr = interaction.fields.getTextInputValue('Input');
 
-    if (interaction.customId === 'inputCode') {
-        const msg = codeBlock("cpp", codeStr)
+    if (interaction.customId.slice(0, 9) === 'inputCode') {
+        const msg = codeBlock(codeStr)
         await interaction.reply(`your code: ${ msg }`)
-        const msg1 = codeBlock("cpp", inputStr)
+        const msg1 = codeBlock(inputStr)
         await interaction.followUp(`your input: ${ msg1 }`)
-        
-        fs.writeFile('./commands/code/code.cpp', codeStr, (err) => {
-            if (err) throw err;
-        })
-        fs.writeFile('./commands/code/in.txt', inputStr, (err) => {
-            if (err) throw err;
-        })
-        exec('bash ./commands/code/run.sh')
-        
-        await new Promise(r => setTimeout(r, 4000));
-        fs.readFile('./commands/code/out.txt', (err, out) => {
-            if (err) throw err;
-            interaction.followUp(codeBlock(out.toString()));
-        })
+
+        if (interaction.customId === 'inputCode_py') {
+            fs.writeFile('./commands/code/compile/py_code.py', codeStr, (err) => {
+                if (err) throw err;
+            })
+            exec('bash ./commands/code/compile/py_run.sh')
+            
+            await new Promise(r => setTimeout(r, 4000));
+            fs.readFile('./commands/code/compile/py_out.txt', (err, out) => {
+                if (err) throw err;
+                interaction.followUp(codeBlock(out.toString()));
+            })
+        }
+        if (interaction.customId === 'inputCode_cpp') {
+            fs.writeFile('./commands/code/compile/cpp_code.cpp', codeStr, (err) => {
+                if (err) throw err;
+            })
+            fs.writeFile('./commands/code/compile/cpp_in.txt', inputStr, (err) => {
+                if (err) throw err;
+            })
+            exec('bash ./commands/code/compile/cpp_run.sh')
+            
+            await new Promise(r => setTimeout(r, 4000));
+            fs.readFile('./commands/code/compile/cpp_out.txt', (err, out) => {
+                if (err) throw err;
+                interaction.followUp(codeBlock(out.toString()));
+            })
+        }
 }})
