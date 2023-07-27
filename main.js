@@ -3,7 +3,6 @@ const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js'); const { token, PATH } = require('./config.json');
 const { codeBlock } = require("@discordjs/builders")
 const { exec } = require("child_process");
-const readFile = require('fs/promises')
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent],
 });
@@ -48,15 +47,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
     if (interaction.customId === 'compilerModal') {
         const codeStr = interaction.fields.getTextInputValue('codeInput');
-        const inputStr = interaction.fields.getTextInputValue('Input');
-        const script = codeBlock(codeStr)
-        await interaction.reply(`your code: ${script}`)
-        const params = codeBlock(inputStr)
-        await interaction.followUp(`your input: ${params}`)
-        const language = interaction.lang
+        const language = fs.readFileSync('./commands/compile/language.txt').toString();      
+        const inputStr = interaction.fields.getTextInputValue('Input')
         switch (language) {
 
-            case cpp:
+            case 'cpp':    
+                var script = codeBlock('cpp',codeStr)
+                await interaction.reply(`Your code: ${script}`)
                 fs.writeFile('./commands/compile/cpp/code.cpp', codeStr, (err) => {
                     if (err) throw err;
                 })
@@ -66,7 +63,9 @@ client.on(Events.InteractionCreate, async interaction => {
                 exec('bash ./commands/compile/cpp/run.sh')
                 break;
 
-            case python:
+            case 'python':
+                var script = codeBlock('python',codeStr)
+                await interaction.reply(`Your code: ${script}`)
                 fs.writeFile('./commands/compile/python/code.py', codeStr, (err) => {
                     if (err) throw err;
                 })
@@ -77,8 +76,13 @@ client.on(Events.InteractionCreate, async interaction => {
                 break;
         }
 
+        if (inputStr != "") {     
+            const params = codeBlock(inputStr)   
+            await interaction.followUp(`Your input: ${params}`)
+        }
+
         await new Promise(r => setTimeout(r, 4000));
-        fs.readFile('./commands/code/compile/out.txt', (err, out) => {
+        fs.readFile('./commands/compile/out.txt', (err, out) => {
             if (err) throw err;
             interaction.followUp(codeBlock(out.toString()));
         })

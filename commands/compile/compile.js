@@ -1,4 +1,5 @@
 const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
+const fs = require('node:fs');
 
 
 module.exports = {
@@ -15,11 +16,15 @@ module.exports = {
                 )),
 
     async execute(interaction) {
-
+        
+        const language = interaction.options.getString('language');
+        fs.writeFile('./commands/compile/language.txt', language, (err) => {
+            if (err) throw err;
+        })
+        
         const modal = new ModalBuilder()
             .setCustomId('compilerModal')
-            .setTitle('Input Code')
-            .lang = interaction.options.getString('language');
+            .setTitle('Input Code');
 
         const scriptInput = new TextInputBuilder()
             .setLabel('Paste code here')
@@ -35,9 +40,6 @@ module.exports = {
 
         const scriptActionRow = new ActionRowBuilder().addComponents(scriptInput);
         const paramsActionRow = new ActionRowBuilder().addComponents(paramsInput);
-        modal.addComponents(scriptActionRow, paramsActionRow);
-
+        modal.addComponents(scriptActionRow, paramsActionRow)
         interaction.showModal(modal);
-
-    },
-};
+}};
