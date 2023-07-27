@@ -18,7 +18,8 @@ module.exports = {
 
         const modal = new ModalBuilder()
             .setCustomId('compilerModal')
-            .setTitle('Input Code');
+            .setTitle('Input Code')
+            .lang = interaction.options.getString('language');
 
         const scriptInput = new TextInputBuilder()
             .setLabel('Paste code here')

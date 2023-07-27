@@ -4,7 +4,6 @@ const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { codeBlock } = require("@discordjs/builders")
 const { exec } = require("child_process");
 const readFile = require('fs/promises')
-
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent],
 });
@@ -54,27 +53,27 @@ client.on(Events.InteractionCreate, async interaction => {
         await interaction.reply(`your code: ${script}`)
         const params = codeBlock(inputStr)
         await interaction.followUp(`your input: ${params}`)
-
-        switch (interaction.options.getString(language)) {
+        const language = interaction.lang
+        switch (language) {
 
             case cpp:
-                fs.writeFile('./commands/code/compile/cpp_code.cpp', codeStr, (err) => {
+                fs.writeFile('./commands/compile/cpp/code.cpp', codeStr, (err) => {
                     if (err) throw err;
                 })
-                fs.writeFile('./commands/code/compile/cpp_in.txt', inputStr, (err) => {
+                fs.writeFile('./commands/compile/cpp/in.txt', inputStr, (err) => {
                     if (err) throw err;
                 })
-                exec('bash ./commands/code/compile/cpp_run.sh')
+                exec('bash ./commands/compile/cpp/run.sh')
                 break;
 
             case python:
-                fs.writeFile('./commands/code/compile/py_code.py', codeStr, (err) => {
+                fs.writeFile('./commands/compile/python/code.py', codeStr, (err) => {
                     if (err) throw err;
                 })
-                fs.writeFile('./commands/code/compile/python_in.txt', inputStr, (err) => {
+                fs.writeFile('./commands/compile/python/in.txt', inputStr, (err) => {
                     if (err) throw err;
                 })
-                exec('bash ./commands/code/compile/py_run.sh')
+                exec('bash ./commands/compile/python/run.sh')
                 break;
         }
 
