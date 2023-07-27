@@ -46,42 +46,42 @@ for (const file of eventFiles) {
 
 client.login(token);
 client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isModalSubmit()) return;
 
-    const codeStr = interaction.fields.getTextInputValue('codeInput');
-    const inputStr = interaction.fields.getTextInputValue('Input');
+    if (interaction.customId === 'compilerModal') {
+        const codeStr = interaction.fields.getTextInputValue('codeInput');
+        const inputStr = interaction.fields.getTextInputValue('Input');
+        const script = codeBlock(codeStr)
+        await interaction.reply(`your code: ${script}`)
+        const params = codeBlock(inputStr)
+        await interaction.followUp(`your input: ${params}`)
 
-    if (interaction.customId.slice(0, 9) === 'inputCode') {
-        const msg = codeBlock(codeStr)
-        await interaction.reply(`your code: ${ msg }`)
-        const msg1 = codeBlock(inputStr)
-        await interaction.followUp(`your input: ${ msg1 }`)
+        switch (interaction.options.getString(language)) {
 
-        if (interaction.customId === 'inputCode_py') {
-            fs.writeFile('./commands/code/compile/py_code.py', codeStr, (err) => {
-                if (err) throw err;
-            })
-            exec('bash ./commands/code/compile/py_run.sh')
-            
-            await new Promise(r => setTimeout(r, 4000));
-            fs.readFile('./commands/code/compile/py_out.txt', (err, out) => {
-                if (err) throw err;
-                interaction.followUp(codeBlock(out.toString()));
-            })
+            case cpp:
+                fs.writeFile('./commands/code/compile/cpp_code.cpp', codeStr, (err) => {
+                    if (err) throw err;
+                })
+                fs.writeFile('./commands/code/compile/cpp_in.txt', inputStr, (err) => {
+                    if (err) throw err;
+                })
+                exec('bash ./commands/code/compile/cpp_run.sh')
+                break;
+
+            case python:
+                fs.writeFile('./commands/code/compile/py_code.py', codeStr, (err) => {
+                    if (err) throw err;
+                })
+                fs.writeFile('./commands/code/compile/python_in.txt', inputStr, (err) => {
+                    if (err) throw err;
+                })
+                exec('bash ./commands/code/compile/py_run.sh')
+                break;
         }
-        if (interaction.customId === 'inputCode_cpp') {
-            fs.writeFile('./commands/code/compile/cpp_code.cpp', codeStr, (err) => {
-                if (err) throw err;
-            })
-            fs.writeFile('./commands/code/compile/cpp_in.txt', inputStr, (err) => {
-                if (err) throw err;
-            })
-            exec('bash ./commands/code/compile/cpp_run.sh')
-            
-            await new Promise(r => setTimeout(r, 4000));
-            fs.readFile('./commands/code/compile/cpp_out.txt', (err, out) => {
-                if (err) throw err;
-                interaction.followUp(codeBlock(out.toString()));
-            })
-        }
-}})
+
+        await new Promise(r => setTimeout(r, 4000));
+        fs.readFile('./commands/code/compile/out.txt', (err, out) => {
+            if (err) throw err;
+            interaction.followUp(codeBlock(out.toString()));
+        })
+    }
+})

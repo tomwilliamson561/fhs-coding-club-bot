@@ -1,4 +1,4 @@
-const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
 
 
 module.exports = {
@@ -10,35 +10,33 @@ module.exports = {
                 .setDescription('Select a language')
                 .setRequired(true)
                 .addChoices(
-                    { name: 'c++', value: 'cpp' },
+                    { name: 'C++', value: 'cpp' },
                     { name: 'Python', value: 'python' },
                 )),
-    async execute(interaction) {
-        const modal = new ModalBuilder();
-        if (interaction.options.getString('language') === 'python') {
-            modal.setCustomId('inputCode_py').setTitle('Input Code')
-        }
-        if (interaction.options.getString('language') === 'cpp') {
-            modal.setCustomId('inputCode_cpp').setTitle('Input Code')
-        }
 
-        const code = new TextInputBuilder()
+    async execute(interaction) {
+
+        const modal = new ModalBuilder()
+            .setCustomId('compilerModal')
+            .setTitle('Input Code');
+
+        const scriptInput = new TextInputBuilder()
             .setLabel('Paste code here')
             .setCustomId('codeInput')
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true);
 
-        const input = new TextInputBuilder()
+        const paramsInput = new TextInputBuilder()
             .setLabel('Paste input here (leave blank if none)')
             .setCustomId('Input')
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(false);
 
+        const scriptActionRow = new ActionRowBuilder().addComponents(scriptInput);
+        const paramsActionRow = new ActionRowBuilder().addComponents(paramsInput);
+        modal.addComponents(scriptActionRow, paramsActionRow);
 
-        const actionRow = new ActionRowBuilder().addComponents(code);
-        const actionRow1 = new ActionRowBuilder().addComponents(input);
+        interaction.showModal(modal);
 
-        modal.addComponents(actionRow, actionRow1)
-        interaction.showModal(modal)
     },
 };

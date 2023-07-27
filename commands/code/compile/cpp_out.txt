@@ -1,1 +1,0 @@
-The value you entered is 5 and its double is 10.
