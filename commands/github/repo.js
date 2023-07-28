@@ -1,6 +1,6 @@
 const { github_token } = require('../../config.json');
 const { Octokit, App } = require("octokit");
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType  } = require('discord.js');
+const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, ButtonBuilder  } = require('discord.js');
 const { fetch } = require('node-fetch');
 
 const octokit = new Octokit({ auth: github_token, request: { fetch } });
@@ -15,13 +15,14 @@ module.exports = {
                 .setName('info')
                 .setDescription('Info about the repo')
                 .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
-                .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))),
-        // .addSubcommand(subcommand =>
-        //     subcommand
-        //         .setName('contributors')
-        //         .setDescription('Lists the contributors of a repo')
-        //         .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
-        //         .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))),
+                .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('code')
+                .setDescription('Get code from a repo')
+                .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
+                .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))
+                .addStringOption(option => option.setName('path').setDescription('The path').setRequired(true))),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const repo = interaction.options.getString('repo');
@@ -144,10 +145,9 @@ module.exports = {
             const collector = reply.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60000 });
 
             collector.on('collect', async (interaction) => {
-                console.log(interaction);
                 if (interaction.customId === 'select_menu') {
                     const selectedValue = interaction.values[0];
-                    console.log(interaction);
+
                     if (selectedValue === 'main') {
                         await interaction.update({ embeds: [main_embed], components: [actionRow] });
                     }
@@ -208,6 +208,88 @@ module.exports = {
                 actionRow.components.forEach((component) => component.setDisabled(true));
                 reply.edit({ components: [actionRow] });
             });
+        }
+        if (subcommand === 'code') {
+            const path = interaction.options.getString('path');
+            const request = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+                owner: owner,
+                repo: repo,
+                path: path,
+            });
+            const data = request.data;
+        
+            const content = atob(data.content);
+        
+            if (content.length > 4096) {
+                const pages = [];
+                let currentPage = 0;
+                const pageSize = 4096;
+        
+                for (let i = 0; i < content.length; i += pageSize) {
+                    pages.push(content.slice(i, i + pageSize));
+                }
+        
+                const code_embeds = pages.map((page, index) => ({
+                    color: 0x0099ff,
+                    title: `${data.name} - Page ${index + 1}/${pages.length}`,
+                    url: data.html_url,
+                    description: page,
+                }));
+        
+                const updateCodeEmbed = async (pageIndex) => {
+                    await interaction.editReply({ embeds: [code_embeds[pageIndex]], components: [getActionRow(pageIndex)] });
+                };
+        
+                const getActionRow = (pageIndex) => {
+                    const previousButton = new ButtonBuilder()
+                        .setCustomId(`previous_${pageIndex}`)
+                        .setLabel('Previous')
+                        .setStyle('Primary')
+                        .setDisabled(pageIndex === 0);
+        
+                    const nextButton = new ButtonBuilder()
+                        .setCustomId(`next_${pageIndex}`)
+                        .setLabel('Next')
+                        .setStyle('Primary')
+                        .setDisabled(pageIndex === pages.length - 1);
+        
+                    return new ActionRowBuilder().addComponents([previousButton, nextButton]);
+                };
+        
+                await interaction.reply({ embeds: [code_embeds[currentPage]], components: [getActionRow(currentPage)] });
+        
+                const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        
+                collector.on('collect', async (buttonInteraction) => {
+                    if (!buttonInteraction.user.id === interaction.user.id) return;
+        
+                    const [action, pageIndex] = buttonInteraction.customId.split('_');
+        
+                    if (action === 'previous') {
+                        currentPage = Math.max(0, parseInt(pageIndex, 10) - 1);
+                    } else if (action === 'next') {
+                        currentPage = Math.min(pages.length - 1, parseInt(pageIndex, 10) + 1);
+                    }
+        
+                    await buttonInteraction.deferUpdate();
+                    await updateCodeEmbed(currentPage);
+                });
+        
+                collector.on('end', () => {
+                    const finalActionRow = getActionRow(currentPage);
+                    finalActionRow.components.forEach((component) => component.setDisabled(true));
+                    interaction.editReply({ components: [finalActionRow] });
+                });
+            } else {
+                const code_embed = {
+                    color: 0x0099ff,
+                    title: data.name,
+                    url: data.html_url,
+                    description: content,
+                };
+        
+                await interaction.reply({ embeds: [code_embed] });
+            }
         }
     },
 };
