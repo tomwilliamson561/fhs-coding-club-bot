@@ -161,6 +161,7 @@ module.exports = {
                         const contributor_embed = {
                             color: 0x0099ff,
                             title: 'Contributers',
+                            url: "https://github.com/" + owner + "/" + repo + "/graphs/contributors",
                             fields: [],
                         };
 
@@ -176,7 +177,6 @@ module.exports = {
                         await interaction.update({ embeds: [contributor_embed], components: [newActionRow] });
                     }
                     if (selectedValue === 'commits') {
-                        console.log("debug");
                         const request = await octokit.request('GET /repos/{owner}/{repo}/commits', {
                             owner: owner,
                             repo: repo,
@@ -186,6 +186,7 @@ module.exports = {
                         const commits_embed = {
                             color: 0x0099ff,
                             title: 'Commits',
+                            url: "https://github.com/" + owner + "/" + repo + "/commits",
                             fields: [],
                         };
 
