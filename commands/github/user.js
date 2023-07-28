@@ -21,6 +21,9 @@ module.exports = {
                 .setName('repos')
                 .setDescription('Get a list of public repos for a user')
                 .addStringOption(option => option.setName('username').setDescription('The username').setRequired(true))
+                .addStringOption(option => option.setName('type').setDescription('Limit results to repositories of the specified type').setRequired(false))
+                .addStringOption(option => option.setName('sort').setDescription('The property to sort the results by').setRequired(false))
+                .addStringOption(option => option.setName('direction').setDescription('The order to sort by').setRequired(false))
         ),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
@@ -50,10 +53,9 @@ module.exports = {
             }
 
             if (data.created_at) {
-                const date = data.created_at.toString();
                 main_embed.fields.push({
                     name: 'Created at',
-                    value: date,
+                    value: data.created_at.toString(),
                 });
             }
 
@@ -178,8 +180,16 @@ module.exports = {
             });
         }
         if (subcommand === 'repos') {
-            const request = await octokit.request('GET /users/{username}/repos', {
+            const type = interaction.options.getString('type');
+            const sort = interaction.options.getString('sort');
+            const direction = interaction.options.getString('direction');
+
+            const request = await octokit.request('GET /users/{username}/repos?type={type}&sort={sort}&direction={direction}', {
                 username: username,
+                type: type ? type : 'owner',
+                sort: sort ? sort : 'full_name',
+                direction: direction ? direction : 'asc',
+                per_page: 100,
             });
             const data = request.data;
 
