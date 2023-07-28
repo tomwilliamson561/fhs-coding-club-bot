@@ -1,6 +1,6 @@
 const { github_token } = require('../../config.json');
-const { Octokit, App } = require("octokit");
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, ButtonBuilder  } = require('discord.js');
+const { Octokit } = require("octokit");
+const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, ButtonBuilder } = require('discord.js');
 const { fetch } = require('node-fetch');
 
 const octokit = new Octokit({ auth: github_token, request: { fetch } });
@@ -8,21 +8,23 @@ const octokit = new Octokit({ auth: github_token, request: { fetch } });
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('repo')
+        .setName('ghrepo')
         .setDescription('Provides information about a repo.')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('info')
                 .setDescription('Info about the repo')
                 .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
-                .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true)))
+                .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))
+        )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('code')
                 .setDescription('Get code from a repo')
                 .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
                 .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))
-                .addStringOption(option => option.setName('path').setDescription('The path').setRequired(true))),
+                .addStringOption(option => option.setName('path').setDescription('The path').setRequired(true))
+        ),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const repo = interaction.options.getString('repo');
@@ -247,7 +249,6 @@ module.exports = {
                             finalActionRow.components.forEach((component) => component.setDisabled(true));
                             interaction.editReply({ components: [finalActionRow] });
                         });
-
                     }
                     if (selectedValue === 'commits') {
                         const request = await octokit.request('GET /repos/{owner}/{repo}/commits', {
