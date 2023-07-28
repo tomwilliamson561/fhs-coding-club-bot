@@ -158,6 +158,54 @@ module.exports = {
                         });
                         const data = request.data;
 
+                        const pageSize = 10;
+                        const pages = [];
+                        for (let i = 0; i < data.length; i += pageSize) {
+                            pages.push(data.slice(i, i + pageSize));
+                        }
+
+                        let currentPage = 0;
+
+                        const updateContributorsEmbed = async (pageIndex) => {
+                            const contributorData = pages[pageIndex];
+                            const contributor_embed = {
+                                color: 0x0099ff,
+                                title: 'Contributers',
+                                url: "https://github.com/" + owner + "/" + repo + "/graphs/contributors",
+                                fields: [],
+                            };
+
+                            contributorData.forEach((contributor) => {
+                                contributor_embed.fields.push(
+                                    {
+                                        name: contributor.login,
+                                        value: `[Profile](${contributor.html_url})`,
+                                    },
+                                );
+                            });
+
+                            const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
+                            const finalActionRow = getActionRow(currentPage);
+                            await interaction.editReply({ embeds: [contributor_embed], components: [newActionRow, finalActionRow] });
+                        };
+
+                        const getActionRow = (pageIndex) => {
+                            const previousButton = new ButtonBuilder()
+                                .setCustomId(`previous_${pageIndex}`)
+                                .setLabel('Previous')
+                                .setStyle('Primary')
+                                .setDisabled(pageIndex === 0);
+
+                            const nextButton = new ButtonBuilder()
+                                .setCustomId(`next_${pageIndex}`)
+                                .setLabel('Next')
+                                .setStyle('Primary')
+                                .setDisabled(pageIndex === pages.length - 1);
+
+                            return new ActionRowBuilder().addComponents([previousButton, nextButton]);
+                        };
+
+                        const contributorData = pages[0];
                         const contributor_embed = {
                             color: 0x0099ff,
                             title: 'Contributers',
@@ -165,7 +213,7 @@ module.exports = {
                             fields: [],
                         };
 
-                        data.forEach((contributor) => {
+                        contributorData.forEach((contributor) => {
                             contributor_embed.fields.push(
                                 {
                                     name: contributor.login,
@@ -173,8 +221,33 @@ module.exports = {
                                 },
                             );
                         });
+
                         const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
-                        await interaction.update({ embeds: [contributor_embed], components: [newActionRow] });
+                        const finalActionRow = getActionRow(currentPage);
+                        await interaction.update({ embeds: [contributor_embed], components: [newActionRow, finalActionRow] });
+
+                        const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+                        collector.on('collect', async (buttonInteraction) => {
+                            if (buttonInteraction.user.id !== interaction.user.id) return;
+
+                            const [action, pageIndex] = buttonInteraction.customId.split('_');
+
+                            if (action === 'previous') {
+                                currentPage = Math.max(0, parseInt(pageIndex, 10) - 1);
+                            } else if (action === 'next') {
+                                currentPage = Math.min(pages.length - 1, parseInt(pageIndex, 10) + 1);
+                            }
+
+                            await buttonInteraction.deferUpdate();
+                            await updateContributorsEmbed(currentPage);
+                        });
+
+                        collector.on('end', () => {
+                            finalActionRow.components.forEach((component) => component.setDisabled(true));
+                            interaction.editReply({ components: [finalActionRow] });
+                        });
+
                     }
                     if (selectedValue === 'commits') {
                         const request = await octokit.request('GET /repos/{owner}/{repo}/commits', {
@@ -183,6 +256,54 @@ module.exports = {
                         });
                         const data = request.data;
 
+                        const pageSize = 10;
+                        const pages = [];
+                        for (let i = 0; i < data.length; i += pageSize) {
+                            pages.push(data.slice(i, i + pageSize));
+                        }
+
+                        let currentPage = 0;
+
+                        const updateCommitsEmbed = async (pageIndex) => {
+                            const commitData = pages[pageIndex];
+                            const commits_embed = {
+                                color: 0x0099ff,
+                                title: 'Commits',
+                                url: "https://github.com/" + owner + "/" + repo + "/commits",
+                                fields: [],
+                            };
+
+                            commitData.forEach((commit) => {
+                                commits_embed.fields.push(
+                                    {
+                                        name: commit.commit.author.name,
+                                        value: `[Commit](${commit.html_url})`,
+                                    },
+                                );
+                            });
+
+                            const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
+                            const finalActionRow = getActionRow(currentPage);
+                            await interaction.editReply({ embeds: [commits_embed], components: [newActionRow, finalActionRow] });
+                        };
+
+                        const getActionRow = (pageIndex) => {
+                            const previousButton = new ButtonBuilder()
+                                .setCustomId(`previous_${pageIndex}`)
+                                .setLabel('Previous')
+                                .setStyle('Primary')
+                                .setDisabled(pageIndex === 0);
+            
+                            const nextButton = new ButtonBuilder()
+                                .setCustomId(`next_${pageIndex}`)
+                                .setLabel('Next')
+                                .setStyle('Primary')
+                                .setDisabled(pageIndex === pages.length - 1);
+            
+                            return new ActionRowBuilder().addComponents([previousButton, nextButton]);
+                        };
+
+                        const commitData = pages[0];
                         const commits_embed = {
                             color: 0x0099ff,
                             title: 'Commits',
@@ -190,7 +311,7 @@ module.exports = {
                             fields: [],
                         };
 
-                        data.forEach((commit) => {
+                        commitData.forEach((commit) => {
                             commits_embed.fields.push(
                                 {
                                     name: commit.commit.author.name,
@@ -200,7 +321,31 @@ module.exports = {
                         });
 
                         const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
-                        await interaction.update({ embeds: [commits_embed], components: [newActionRow] });
+                        const finalActionRow = getActionRow(currentPage);
+                        await interaction.update({ embeds: [commits_embed], components: [newActionRow, finalActionRow] });
+
+                        const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+                        collector.on('collect', async (buttonInteraction) => {
+                            if (buttonInteraction.user.id !== interaction.user.id) return;
+            
+                            const [action, pageIndex] = buttonInteraction.customId.split('_');
+            
+                            if (action === 'previous') {
+                                currentPage = Math.max(0, parseInt(pageIndex, 10) - 1);
+                            } else if (action === 'next') {
+                                currentPage = Math.min(pages.length - 1, parseInt(pageIndex, 10) + 1);
+                            }
+
+                            await buttonInteraction.deferUpdate();
+                            await updateCommitsEmbed(currentPage);
+                        });
+
+                        collector.on('end', () => {
+                            const finalActionRow = getActionRow(currentPage);
+                            finalActionRow.components.forEach((component) => component.setDisabled(true));
+                            interaction.editReply({ components: [finalActionRow] });
+                        });
                     }
                 }
             });
