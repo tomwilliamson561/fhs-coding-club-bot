@@ -137,6 +137,7 @@ module.exports = {
                     { label: 'Main', description: 'Main menu', value: 'main' },
                     { label: 'Contributers', description: 'View top contributers', value: 'contributers' },
                     { label: 'Commits', description: 'View latest commits', value: 'commits' },
+                    { label: 'Branches', description: 'View branches', value: 'branches' }
                 ]
             });
 
@@ -347,6 +348,107 @@ module.exports = {
                             finalActionRow.components.forEach((component) => component.setDisabled(true));
                             interaction.editReply({ components: [finalActionRow] });
                         });
+                    }
+                    if (selectedValue === 'branches') {
+                        const request = await octokit.request('GET /repos/{owner}/{repo}/branches', {
+                            owner: owner,
+                            repo: repo,
+                        });
+                        const data = request.data;
+
+                        const pageSize = 10;
+                        const pages = [];
+                        for (let i = 0; i < data.length; i += pageSize) {
+                            pages.push(data.slice(i, i + pageSize));
+                        }
+
+                        let currentPage = 0;
+
+                        const updateBranchesEmbed = async (pageIndex) => {
+                            const branchData = pages[pageIndex];
+                            const branches_embed = {
+                                color: 0x0099ff,
+                                title: 'Branches',
+                                url: "https://github.com/" + owner + "/" + repo + "/branches",
+                                fields: [],
+                            };
+
+                            branchData.forEach((branch) => {
+                                const url = "https://github.com/" + owner + "/" + repo + "/tree/" + branch.name;
+                                branches_embed.fields.push(
+                                    {
+                                        name: branch.name,
+                                        value: `[Branch](${url})`,
+                                    },
+                                );
+                            });
+
+                            const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
+                            const finalActionRow = getActionRow(currentPage);
+                            await interaction.editReply({ embeds: [branches_embed], components: [newActionRow, finalActionRow] });
+                        };
+
+                        const getActionRow = (pageIndex) => {
+                            const previousButton = new ButtonBuilder()
+                                .setCustomId(`previous_${pageIndex}`)
+                                .setLabel('Previous')
+                                .setStyle('Primary')
+                                .setDisabled(pageIndex === 0);
+            
+                            const nextButton = new ButtonBuilder()
+                                .setCustomId(`next_${pageIndex}`)
+                                .setLabel('Next')
+                                .setStyle('Primary')
+                                .setDisabled(pageIndex === pages.length - 1);
+            
+                            return new ActionRowBuilder().addComponents([previousButton, nextButton]);
+                        };
+
+                        const branchData = pages[0];
+                        const branches_embed = {
+                            color: 0x0099ff,
+                            title: 'Branches',
+                            url: "https://github.com/" + owner + "/" + repo + "/branches",
+                            fields: [],
+                        };
+
+                        branchData.forEach((branch) => {
+                            const url = "https://github.com/" + owner + "/" + repo + "/tree/" + branch.name;
+                            branches_embed.fields.push(
+                                {
+                                    name: branch.name,
+                                    value: `[Branch](${url})`,
+                                },
+                            );
+                        });
+
+                        const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
+                        const finalActionRow = getActionRow(currentPage);
+                        await interaction.update({ embeds: [branches_embed], components: [newActionRow, finalActionRow] });
+
+                        const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+                        collector.on('collect', async (buttonInteraction) => {
+                            if (buttonInteraction.user.id !== interaction.user.id) return;
+            
+                            const [action, pageIndex] = buttonInteraction.customId.split('_');
+            
+                            if (action === 'previous') {
+                                currentPage = Math.max(0, parseInt(pageIndex, 10) - 1);
+                            } else if (action === 'next') {
+                                currentPage = Math.min(pages.length - 1, parseInt(pageIndex, 10) + 1);
+                            }
+
+                            await buttonInteraction.deferUpdate();
+                            await updateBranchesEmbed(currentPage);
+                        });
+
+                        collector.on('end', () => {
+                            const finalActionRow = getActionRow(currentPage);
+                            finalActionRow.components.forEach((component) => component.setDisabled(true));
+                            interaction.editReply({ components: [finalActionRow] });
+                        });
+
                     }
                 }
             });
