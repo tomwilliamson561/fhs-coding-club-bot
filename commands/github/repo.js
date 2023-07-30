@@ -563,28 +563,48 @@ module.exports = {
             });
             const data = request.data;
 
+            const formatTree = (tree) => {
+                let output = '';
+                const sortedTree = tree.sort((a, b) => a.path.localeCompare(b.path));
+        
+                for (let i = 0; i < sortedTree.length; i++) {
+                    const item = sortedTree[i];
+                    if (ignore_paths.some(path => item.path.includes(path))) continue;
+        
+                    const url = "https://github.com/" + owner + "/" + repo + "/tree/" + branch + "/" + item.path;
+                    const file = item.path.split('/').pop();
+
+                    let isLast = false;
+                    if (i === tree.length - 1) isLast = true;
+                    else if (sortedTree[i + 1].path.split('/').length < item.path.split('/').length) isLast = true;
+
+                    const prefix = isLast ? '└─ ' : '├─ ';
+
+                    if (item.path.split('/').length === 1) {
+                        output += `${prefix}[${item.type}] [${file}](${url})\n`;
+                    }
+                    else {
+                        const preIndent = ' |　 '.repeat(Math.max(item.path.split('/').length - 1, 0));
+                        output += ` ${preIndent}${prefix}[${item.type}] [${file}](${url})\n`;
+                    }
+        
+                    if (item.type === 'tree' && recursive) {
+                        const subdirectory = tree.filter(subitem => subitem.path.startsWith(item.path + '/'));
+                        output += formatTree(subdirectory);
+                    }
+                }
+        
+                return output;
+            };
+
+            const tree_output = formatTree(data.tree);
+        
             const tree_embed = {
                 color: 0x0099ff,
                 title: owner + "/" + repo + " - Tree",
                 url: "https://github.com/" + owner + "/" + repo + "/tree/" + branch,
-                thumbnail: {
-                    url: data.avatar_url,
-                },
-                fields: [],
+                description: "\n" + repo + "\n" + tree_output,
             };
-
-            data.tree.forEach((tree) => {
-                for (let path of ignore_paths) {
-                    if (tree.path.includes(path)) return;
-                }
-                const url = "https://github.com/" + owner + "/" + repo + "/tree/" + branch + "/" + tree.path;
-                tree_embed.fields.push(
-                    {
-                        name: tree.path,
-                        value: `[${tree.type}](${url})`,
-                    },
-                );
-            });
 
             await interaction.reply({ embeds: [tree_embed] });
         }
