@@ -24,6 +24,15 @@ module.exports = {
                 .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
                 .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))
                 .addStringOption(option => option.setName('path').setDescription('The path').setRequired(true))
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('tree')
+                .setDescription('Repo tree structure')
+                .addStringOption(option => option.setName('owner').setDescription('The owner').setRequired(true))
+                .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))
+                .addStringOption(option => option.setName('branch').setDescription('The branch').setRequired(true))
+                .addBooleanOption(option => option.setName('recursive').setDescription('Recursive').setRequired(false))
         ),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
@@ -539,6 +548,39 @@ module.exports = {
         
                 await interaction.reply({ embeds: [code_embed] });
             }
+        }
+        if (subcommand === 'tree') {
+            const branch = interaction.options.getString('branch');
+            const recursive = interaction.options.getBoolean('recursive');
+            const request = await octokit.request('GET /repos/{owner}/{repo}/git/trees/{branch}?recursive={recursive}', {
+                owner: owner,
+                repo: repo,
+                branch: branch,
+                recursive: recursive ? 1 : 0,
+            });
+            const data = request.data;
+
+            const tree_embed = {
+                color: 0x0099ff,
+                title: owner + "/" + repo + " - Tree",
+                url: "https://github.com/" + owner + "/" + repo + "/tree/" + branch,
+                thumbnail: {
+                    url: data.avatar_url,
+                },
+                fields: [],
+            };
+
+            data.tree.forEach((tree) => {
+                const url = "https://github.com/" + owner + "/" + repo + "/tree/" + branch + "/" + tree.path;
+                tree_embed.fields.push(
+                    {
+                        name: tree.path,
+                        value: `[${tree.type}](${url})`,
+                    },
+                );
+            });
+
+            await interaction.reply({ embeds: [tree_embed] });
         }
     },
 };
