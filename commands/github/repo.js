@@ -33,6 +33,7 @@ module.exports = {
                 .addStringOption(option => option.setName('repo').setDescription('The repo').setRequired(true))
                 .addStringOption(option => option.setName('branch').setDescription('The branch').setRequired(true))
                 .addBooleanOption(option => option.setName('recursive').setDescription('Recursive').setRequired(false))
+                .addStringOption(option => option.setName('ignore').setDescription('Ignore paths (separate by spaces)').setRequired(false))
         ),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
@@ -552,6 +553,8 @@ module.exports = {
         if (subcommand === 'tree') {
             const branch = interaction.options.getString('branch');
             const recursive = interaction.options.getBoolean('recursive');
+            const ignore = interaction.options.getString('ignore');
+            const ignore_paths = ignore ? ignore.split(' ') : [];
             const request = await octokit.request('GET /repos/{owner}/{repo}/git/trees/{branch}?recursive={recursive}', {
                 owner: owner,
                 repo: repo,
@@ -571,6 +574,9 @@ module.exports = {
             };
 
             data.tree.forEach((tree) => {
+                for (let path of ignore_paths) {
+                    if (tree.path.includes(path)) return;
+                }
                 const url = "https://github.com/" + owner + "/" + repo + "/tree/" + branch + "/" + tree.path;
                 tree_embed.fields.push(
                     {
