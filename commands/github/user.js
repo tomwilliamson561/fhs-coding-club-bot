@@ -97,8 +97,7 @@ module.exports = {
 
                     if (selectedValue === 'main') {
                         await interaction.update({ embeds: [main_embed], components: [actionRow] });
-                    }
-                    if (selectedValue === 'stats') {
+                    } else if (selectedValue === 'stats') {
                         const stats_embed = {
                             color: 0x0099ff,
                             title: data.name,
@@ -128,8 +127,7 @@ module.exports = {
 
                         const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
                         await interaction.update({ embeds: [stats_embed], components: [newActionRow] });
-                    }
-                    if (selectedValue === 'socials') {
+                    } else if (selectedValue === 'socials') {
                         const socials_embed = {
                             color: 0x0099ff,
                             title: data.name,
@@ -178,8 +176,7 @@ module.exports = {
                 actionRow.components.forEach((component) => component.setDisabled(true));
                 reply.edit({ components: [actionRow] });
             });
-        }
-        if (subcommand === 'repos') {
+        } else if (subcommand === 'repos') {
             const type = interaction.options.getString('type');
             const sort = interaction.options.getString('sort');
             const direction = interaction.options.getString('direction');

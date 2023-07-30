@@ -163,8 +163,7 @@ module.exports = {
 
                     if (selectedValue === 'main') {
                         await interaction.update({ embeds: [main_embed], components: [actionRow] });
-                    }
-                    if (selectedValue === 'contributers') {
+                    } else if (selectedValue === 'contributers') {
                         const request = await octokit.request('GET /repos/{owner}/{repo}/contributors', {
                             owner: owner,
                             repo: repo,
@@ -260,8 +259,7 @@ module.exports = {
                             finalActionRow.components.forEach((component) => component.setDisabled(true));
                             interaction.editReply({ components: [finalActionRow] });
                         });
-                    }
-                    if (selectedValue === 'commits') {
+                    } else if (selectedValue === 'commits') {
                         const request = await octokit.request('GET /repos/{owner}/{repo}/commits', {
                             owner: owner,
                             repo: repo,
@@ -358,8 +356,7 @@ module.exports = {
                             finalActionRow.components.forEach((component) => component.setDisabled(true));
                             interaction.editReply({ components: [finalActionRow] });
                         });
-                    }
-                    if (selectedValue === 'branches') {
+                    } else if (selectedValue === 'branches') {
                         const request = await octokit.request('GET /repos/{owner}/{repo}/branches', {
                             owner: owner,
                             repo: repo,
@@ -467,8 +464,7 @@ module.exports = {
                 actionRow.components.forEach((component) => component.setDisabled(true));
                 reply.edit({ components: [actionRow] });
             });
-        }
-        if (subcommand === 'code') {
+        } else if (subcommand === 'code') {
             const path = interaction.options.getString('path');
             const request = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
                 owner: owner,
@@ -549,8 +545,7 @@ module.exports = {
         
                 await interaction.reply({ embeds: [code_embed] });
             }
-        }
-        if (subcommand === 'tree') {
+        } else if (subcommand === 'tree') {
             const branch = interaction.options.getString('branch');
             const recursive = interaction.options.getBoolean('recursive');
             const ignore = interaction.options.getString('ignore');
@@ -582,8 +577,7 @@ module.exports = {
 
                     if (item.path.split('/').length === 1) {
                         output += `${prefix}[${item.type}] [${file}](${url})\n`;
-                    }
-                    else {
+                    } else {
                         const preIndent = ' |　 '.repeat(Math.max(item.path.split('/').length - 1, 0));
                         output += ` ${preIndent}${prefix}[${item.type}] [${file}](${url})\n`;
                     }
