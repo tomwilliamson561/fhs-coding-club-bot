@@ -148,7 +148,8 @@ module.exports = {
                         { label: 'Main', description: 'Main menu', value: 'main' },
                         { label: 'Contributers', description: 'View top contributers', value: 'contributers' },
                         { label: 'Commits', description: 'View latest commits', value: 'commits' },
-                        { label: 'Branches', description: 'View branches', value: 'branches' }
+                        { label: 'Branches', description: 'View branches', value: 'branches' },
+                        { label: 'Pull Requests', description: 'View pull requests', value: 'pull_requests'}
                     ]
                 });
 
@@ -168,6 +169,7 @@ module.exports = {
                             const request = await octokit.request('GET /repos/{owner}/{repo}/contributors', {
                                 owner: owner,
                                 repo: repo,
+                                per_page: 100,
                             });
                             const data = request.data;
 
@@ -264,6 +266,7 @@ module.exports = {
                             const request = await octokit.request('GET /repos/{owner}/{repo}/commits', {
                                 owner: owner,
                                 repo: repo,
+                                per_page: 100,
                             });
                             const data = request.data;
 
@@ -361,6 +364,7 @@ module.exports = {
                             const request = await octokit.request('GET /repos/{owner}/{repo}/branches', {
                                 owner: owner,
                                 repo: repo,
+                                per_page: 100,
                             });
                             const data = request.data;
 
@@ -457,6 +461,103 @@ module.exports = {
                                 interaction.editReply({ components: [finalActionRow] });
                             });
 
+                        } else if (selectedValue === 'pull_requests') {
+                            const request = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+                                owner: owner,
+                                repo: repo,
+                                per_page: 100,
+                            });
+                            const data = request.data;
+
+                            const pageSize = 10;
+                            const pages = [];
+                            for (let i = 0; i < data.length; i += pageSize) {
+                                pages.push(data.slice(i, i + pageSize));
+                            }
+
+                            let currentPage = 0;
+
+                            const updatePullsEmbed = async (pageIndex) => {
+                                const pullsData = pages[pageIndex];
+                                const pulls_embed = {
+                                    color: 0x0099ff,
+                                    title: 'Pull requests',
+                                    url: "https://github.com/" + owner + "/" + repo + "/pulls",
+                                    fields: [],
+                                };
+
+                                pullsData.forEach((pull) => {
+                                    pulls_embed.fields.push(
+                                        {
+                                            name: pull.title,
+                                            value: `[Pull request #${pull.number}](${pull.html_url})`,
+                                        },
+                                    );
+                                });
+
+                                const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
+                                const finalActionRow = getActionRow(currentPage);
+                                await interaction.editReply({ embeds: [pulls_embed], components: [newActionRow, finalActionRow] });
+                            };
+
+                            const getActionRow = (pageIndex) => {
+                                const previousButton = new ButtonBuilder()
+                                    .setCustomId(`previous_${pageIndex}`)
+                                    .setLabel('Previous')
+                                    .setStyle('Primary')
+                                    .setDisabled(pageIndex === 0);
+
+                                const nextButton = new ButtonBuilder()
+                                    .setCustomId(`next_${pageIndex}`)
+                                    .setLabel('Next')
+                                    .setStyle('Primary')
+                                    .setDisabled(pageIndex === pages.length - 1);
+
+                                return new ActionRowBuilder().addComponents([previousButton, nextButton]);
+                            };
+
+                            const pullsData = pages[0];
+                            const pulls_embed = {
+                                color: 0x0099ff,
+                                title: 'Pull requests',
+                                url: "https://github.com/" + owner + "/" + repo + "/pulls",
+                                fields: [],
+                            };
+
+                            pullsData.forEach((pull) => {
+                                pulls_embed.fields.push(
+                                    {
+                                        name: pull.title,
+                                        value: `[Pull request #${pull.number}](${pull.html_url})`,
+                                    },
+                                );
+                            });
+
+                            const newActionRow = new ActionRowBuilder().addComponents(selectMenu);
+                            const finalActionRow = getActionRow(currentPage);
+                            await interaction.update({ embeds: [pulls_embed], components: [newActionRow, finalActionRow] });
+
+                            const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+                            collector.on('collect', async (buttonInteraction) => {
+                                if (buttonInteraction.user.id !== interaction.user.id) return;
+
+                                const [action, pageIndex] = buttonInteraction.customId.split('_');
+
+                                if (action === 'previous') {
+                                    currentPage = Math.max(0, parseInt(pageIndex, 10) - 1);
+                                } else if (action === 'next') {
+                                    currentPage = Math.min(pages.length - 1, parseInt(pageIndex, 10) + 1);
+                                }
+
+                                await buttonInteraction.deferUpdate();
+                                await updatePullsEmbed(currentPage);
+                            });
+
+                            collector.on('end', () => {
+                                finalActionRow.components.forEach((component) => component.setDisabled(true));
+                                interaction.editReply({ components: [finalActionRow] });
+                            });
                         }
                     }
                 });
