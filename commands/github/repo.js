@@ -166,7 +166,7 @@ module.exports = {
                         if (selectedValue === 'main') {
                             await interaction.update({ embeds: [main_embed], components: [actionRow] });
                         } else if (selectedValue === 'contributers') {
-                            const request = await octokit.request('GET /repos/{owner}/{repo}/contributors', {
+                            const request = await octokit.request('GET /repos/{owner}/{repo}/contributors&per_page={per_page}', {
                                 owner: owner,
                                 repo: repo,
                                 per_page: 100,
@@ -263,7 +263,7 @@ module.exports = {
                                 interaction.editReply({ components: [finalActionRow] });
                             });
                         } else if (selectedValue === 'commits') {
-                            const request = await octokit.request('GET /repos/{owner}/{repo}/commits', {
+                            const request = await octokit.request('GET /repos/{owner}/{repo}/commits&per_page={per_page}', {
                                 owner: owner,
                                 repo: repo,
                                 per_page: 100,
@@ -361,7 +361,7 @@ module.exports = {
                                 interaction.editReply({ components: [finalActionRow] });
                             });
                         } else if (selectedValue === 'branches') {
-                            const request = await octokit.request('GET /repos/{owner}/{repo}/branches', {
+                            const request = await octokit.request('GET /repos/{owner}/{repo}/branches&per_page={per_page}', {
                                 owner: owner,
                                 repo: repo,
                                 per_page: 100,
@@ -462,7 +462,7 @@ module.exports = {
                             });
 
                         } else if (selectedValue === 'pull_requests') {
-                            const request = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+                            const request = await octokit.request('GET /repos/{owner}/{repo}/pulls&per_page={per_page}', {
                                 owner: owner,
                                 repo: repo,
                                 per_page: 100,

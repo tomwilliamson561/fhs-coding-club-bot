@@ -187,7 +187,7 @@ module.exports = {
             const direction = interaction.options.getString('direction');
 
             try {
-                const request = await octokit.request('GET /users/{username}/repos?type={type}&sort={sort}&direction={direction}', {
+                const request = await octokit.request('GET /users/{username}/repos?type={type}&sort={sort}&direction={direction}&per_page={per_page}', {
                     username: username,
                     type: type ? type : 'owner',
                     sort: sort ? sort : 'full_name',
@@ -223,7 +223,7 @@ module.exports = {
                     });
 
                     const actionRow = getActionRow(currentPage);
-                    await interaction.editReply({ embeds: [repos_embed], components: [ actionRow] });
+                    await interaction.editReply({ embeds: [repos_embed], components: [actionRow] });
                 };
 
                 const getActionRow = (pageIndex) => {
@@ -260,7 +260,7 @@ module.exports = {
                 });
 
                 const actionRow = getActionRow(currentPage);
-                await interaction.reply({ embeds: [repos_embed], components: [ actionRow] });
+                await interaction.reply({ embeds: [repos_embed], components: [actionRow] });
 
                 const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
