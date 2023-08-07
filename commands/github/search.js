@@ -297,7 +297,7 @@ module.exports = {
                     const issues_embed = {
                         color: 0x0099ff,
                         title: 'Issues',
-                        url: "https://github.com/search?" + query + "&type=issues",
+                        url: "https://github.com/search?" + query,
                         fields: [],
                     };
 
@@ -334,7 +334,7 @@ module.exports = {
                 const issues_embed = {
                     color: 0x0099ff,
                     title: 'Issues',
-                    url: "https://github.com/search?" + query + "&type=issues",
+                    url: "https://github.com/search?" + query,
                     fields: [],
                 };
 
