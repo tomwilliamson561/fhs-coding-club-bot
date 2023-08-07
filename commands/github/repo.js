@@ -1,7 +1,7 @@
 const { github_token, DEBUG } = require('../../config.json');
 const { Octokit } = require("octokit");
 const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, ButtonBuilder } = require('discord.js');
-const { fetch } = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const octokit = new Octokit({ auth: github_token, request: { fetch } });
 

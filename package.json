@@ -12,6 +12,7 @@
     "child_process": "^1.0.2",
     "discord.js": "^14.11.0",
     "fs.js": "^0.0.1",
+    "node-fetch": "^3.3.2",
     "octokit": "^3.1.0"
   }
 }
