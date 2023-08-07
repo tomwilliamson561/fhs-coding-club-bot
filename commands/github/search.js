@@ -521,7 +521,7 @@ module.exports = {
                     const labels_embed = {
                         color: 0x0099ff,
                         title: 'Labels',
-                        url: "https://github.com/search?" + query + "&type=labels",
+                        url: "https://github.com/search?q=" + query + "&repository_id=" + repo + "&type=labels",
                         fields: [],
                     };
 
@@ -529,7 +529,7 @@ module.exports = {
                         labels_embed.fields.push(
                             {
                                 name: label.name,
-                                value: `[Result](${label.html_url})`,
+                                value: `[Result](https://github.com/${label.url.split('/').slice(4).join('/')})`,
                             },
                         );
                     });
@@ -558,7 +558,7 @@ module.exports = {
                 const labels_embed = {
                     color: 0x0099ff,
                     title: 'Labels',
-                    url: "https://github.com/search?" + query + "&type=labels",
+                    url: "https://github.com/search?q=" + query + "&repository_id=" + repo + "&type=labels",
                     fields: [],
                 };
 
@@ -566,13 +566,13 @@ module.exports = {
                     labels_embed.fields.push(
                         {
                             name: label.name,
-                            value: `[Result](${label.html_url})`,
+                            value: `[Result](https://github.com/${label.url.split('/').slice(4).join('/')})`,
                         },
                     );
                 });
 
                 const actionRow = getActionRow(currentPage);
-                await interaction.editReply({ embeds: [labels_embed], components: [actionRow] });
+                await interaction.reply({ embeds: [labels_embed], components: [actionRow] });
 
                 const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
