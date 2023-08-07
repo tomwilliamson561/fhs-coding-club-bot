@@ -1,6 +1,6 @@
 const { github_token, DEBUG } = require('../../config.json');
 const { Octokit } = require("octokit");
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, ButtonBuilder } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ComponentType, ButtonBuilder } = require('discord.js');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const octokit = new Octokit({ auth: github_token, request: { fetch } });
@@ -27,7 +27,15 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('issues')
-                .setDescription('Search issues and pull requests')
+                .setDescription('Search issues')
+                .addStringOption(option => option.setName('query').setDescription('Query').setRequired(true))
+                .addStringOption(option => option.setName('sort').setDescription('Sort').setRequired(false))
+                .addStringOption(option => option.setName('order').setDescription('Order').setRequired(false))
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('pull-requests')
+                .setDescription('Search pull requests')
                 .addStringOption(option => option.setName('query').setDescription('Query').setRequired(true))
                 .addStringOption(option => option.setName('sort').setDescription('Sort').setRequired(false))
                 .addStringOption(option => option.setName('order').setDescription('Order').setRequired(false))
@@ -292,12 +300,14 @@ module.exports = {
 
                 let currentPage = 0;
 
+                const parsedQuery = query.replace(' ', '%20')
+
                 const updateIssuesEmbed = async (pageIndex) => {
                     const issuesData = pages[pageIndex];
                     const issues_embed = {
                         color: 0x0099ff,
                         title: 'Issues',
-                        url: "https://github.com/search?" + query,
+                        url: "https://github.com/search?q=" + parsedQuery + "&type=issue",
                         fields: [],
                     };
 
@@ -334,7 +344,7 @@ module.exports = {
                 const issues_embed = {
                     color: 0x0099ff,
                     title: 'Issues',
-                    url: "https://github.com/search?" + query,
+                    url: "https://github.com/search?q=" + parsedQuery + "&type=issue",
                     fields: [],
                 };
 
@@ -365,6 +375,113 @@ module.exports = {
 
                     await buttonInteraction.deferUpdate();
                     await updateIssuesEmbed(currentPage);
+                });
+
+                collector.on('end', () => {
+                    actionRow.components.forEach((component) => component.setDisabled(true));
+                    interaction.editReply({ components: [actionRow] });
+                });
+
+            } catch (error) {
+                if (DEBUG) console.error(error);
+                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+            }
+        } else if (subcommand === 'pull-requests') {
+            try {
+                const sort = interaction.options.getString('sort');
+                const order = interaction.options.getString('order');
+                
+                const request = await octokit.request('GET /search/issues?q={query}&sort={sort}&order={order}&per_page={per_page}', {
+                    query: query,
+                    sort: sort,
+                    order: order,
+                    per_page: 100,
+                });
+                const data = request.data;
+
+                const pageSize = 10;
+                const pages = [];
+                for (let i = 0; i < data.items.length; i += pageSize) {
+                    pages.push(data.items.slice(i, i + pageSize));
+                }
+
+                let currentPage = 0;
+
+                const parsedQuery = query.replace(' ', '%20')
+
+                const updatePullRequestsEmbed = async (pageIndex) => {
+                    const pullRequestsData = pages[pageIndex];
+                    const pullRequests_embed = {
+                        color: 0x0099ff,
+                        title: 'Pull Requests',
+                        url: "https://github.com/search?q=" + parsedQuery + "&type=pullrequests",
+                        fields: [],
+                    };
+                    
+                    pullRequestsData.forEach((pullRequest) => {
+                        pullRequests_embed.fields.push(
+                            {
+                                name: pullRequest.title,
+                                value: `[Result](${pullRequest.html_url})`,
+                            },
+                        );
+                    });
+
+                    const actionRow = getActionRow(currentPage);
+                    await interaction.editReply({ embeds: [pullRequests_embed], components: [actionRow] });
+                };
+
+                const getActionRow = (pageIndex) => {
+                    const previousButton = new ButtonBuilder()
+                        .setCustomId(`previous_${pageIndex}`)
+                        .setLabel('Previous')
+                        .setStyle('Primary')
+                        .setDisabled(pageIndex === 0);
+
+                    const nextButton = new ButtonBuilder()
+                        .setCustomId(`next_${pageIndex}`)
+                        .setLabel('Next')
+                        .setStyle('Primary')
+                        .setDisabled(pageIndex === pages.length - 1);
+
+                    return new ActionRowBuilder().addComponents([previousButton, nextButton]);
+                }
+
+                const pullRequestsData = pages[0];
+                const pullRequests_embed = {
+                    color: 0x0099ff,
+                    title: 'Pull Requests',
+                    url: "https://github.com/search?q=" + parsedQuery + "&type=pullrequests",
+                    fields: [],
+                };
+
+                pullRequestsData.forEach((pullRequest) => {
+                    pullRequests_embed.fields.push(
+                        {
+                            name: pullRequest.title,
+                            value: `[Result](${pullRequest.html_url})`,
+                        },
+                    );
+                });
+
+                const actionRow = getActionRow(currentPage);
+                await interaction.reply({ embeds: [pullRequests_embed], components: [actionRow] });
+
+                const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+                collector.on('collect', async (buttonInteraction) => {
+                    if (buttonInteraction.user.id !== interaction.user.id) return;
+
+                    const [action, pageIndex] = buttonInteraction.customId.split('_');
+
+                    if (action === 'previous') {
+                        currentPage = Math.max(0, parseInt(pageIndex, 10) - 1);
+                    } else if (action === 'next') {
+                        currentPage = Math.min(pages.length - 1, parseInt(pageIndex, 10) + 1);
+                    }
+
+                    await buttonInteraction.deferUpdate();
+                    await updatePullRequestsEmbed(currentPage);
                 });
 
                 collector.on('end', () => {
@@ -617,7 +734,7 @@ module.exports = {
                         topics_embed.fields.push(
                             {
                                 name: topic.name,
-                                value: `[Result](${topic.html_url})`,
+                                value: `[Result](https://github.com/topics/${topic.name})`,
                             },
                         );
                     });
@@ -654,13 +771,13 @@ module.exports = {
                     topics_embed.fields.push(
                         {
                             name: topic.name,
-                            value: `[Result](${topic.html_url})`,
+                            value: `[Result](https://github.com/topics/${topic.name})`,
                         },
                     );
                 });
 
                 const actionRow = getActionRow(currentPage);
-                await interaction.editReply({ embeds: [topics_embed], components: [actionRow] });
+                await interaction.reply({ embeds: [topics_embed], components: [actionRow] });
 
                 const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
@@ -721,7 +838,7 @@ module.exports = {
                     usersData.forEach((user) => {
                         users_embed.fields.push(
                             {
-                                name: user.name,
+                                name: user.login,
                                 value: `[Result](${user.html_url})`,
                             },
                         );
@@ -758,14 +875,14 @@ module.exports = {
                 usersData.forEach((user) => {
                     users_embed.fields.push(
                         {
-                            name: user.name,
+                            name: user.login,
                             value: `[Result](${user.html_url})`,
                         },
                     );
                 });
 
                 const actionRow = getActionRow(currentPage);
-                await interaction.editReply({ embeds: [users_embed], components: [actionRow] });
+                await interaction.reply({ embeds: [users_embed], components: [actionRow] });
 
                 const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
 
