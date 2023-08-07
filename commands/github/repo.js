@@ -58,6 +58,15 @@ module.exports = {
                 if (data.description) {
                     main_embed.description = data.description;
                 }
+                if (data.id) {
+                    main_embed.fields.push(
+                        {
+                            name: 'ID',
+                            value: data.id,
+                            inline: true,
+                        },
+                    );
+                }
                 if (data.language) {
                     main_embed.fields.push(
                         {
