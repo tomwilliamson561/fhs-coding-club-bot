@@ -389,6 +389,7 @@ module.exports = {
         } else if (subcommand === 'pull-requests') {
             try {
                 await interaction.deferReply();
+
                 const sort = interaction.options.getString('sort');
                 const order = interaction.options.getString('order');
                 
@@ -483,7 +484,6 @@ module.exports = {
 
                     await buttonInteraction.deferUpdate();
                     await updatePullRequestsEmbed(currentPage);
-                    console.log("debug");
                 });
 
                 collector.on('end', () => {
@@ -604,6 +604,8 @@ module.exports = {
             }
         } else if (subcommand === 'repositories') {
             try {
+                await interaction.deferReply();
+                
                 const sort = interaction.options.getString('sort');
                 const order = interaction.options.getString('order');
 
@@ -805,7 +807,7 @@ module.exports = {
 
             } catch (error) {
                 if (DEBUG) console.error(error);
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.editReply({ content: 'There was an error while executing this command!' });
             }
         } else if (subcommand === 'users') {
             try {
