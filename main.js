@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js'); const { token, PATH } = require('./config.json');
+const { Client, Collection, Events, GatewayIntentBits } = require('discord.js'); const { token } = require('./config.json');
 const { codeBlock } = require("@discordjs/builders")
 const { exec } = require("child_process");
 const client = new Client({
